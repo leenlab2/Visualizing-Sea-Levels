@@ -88,7 +88,6 @@ def get_altitude(point: Tuple[float, float], key_filepath: str) -> float:
     >>> get_altitude((0.0, 0.0), 'elevation_api_key.txt'))
     -3492
     """
-
     # request urls are essentially the same each request, but only with the lat and lon points having different values
     begin = 'https://maps.googleapis.com/maps/api/elevation/json?locations='  # beginning of the url
 
