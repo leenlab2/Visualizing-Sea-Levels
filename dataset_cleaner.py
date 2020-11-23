@@ -23,7 +23,7 @@ def read_temperature_data() -> Dict[int, float]:
 ###################################################################################################
 def read_sea_level_data() -> Dict[int, float]:
     """Return a dictionary where the key is a certain year and the value is the average sea level change
-    for that year.
+    for that year (from 2006 to 2119).
     """
     fn = 'global_timeseries_measures.nc.nc4'
     ds = nc.Dataset(fn)
