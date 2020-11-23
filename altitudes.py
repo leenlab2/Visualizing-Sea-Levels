@@ -1,6 +1,8 @@
 """This module uses the elevation API to get altitude of certain locations.
 """
 from typing import List, Tuple
+import json
+import requests
 
 
 def split_into_grid(n: int, coords: List[Tuple[float, float]]) -> Tuple[List[float], List[float]]:
@@ -72,9 +74,35 @@ def get_midpoints(grid: Tuple[List[float], List[float]]) -> List[Tuple[float, fl
     return points_so_far
 
 
-def get_altitude(point: Tuple[float, float]) -> float:
-    """Return the altitude of a give point, using an elevation API"""
-    # TODO
+def get_altitude(point: Tuple[float, float], key_filepath: str) -> float:
+    """Return the altitude of a give point, using google elevation API
+    The tuple values should containt (latitude, longitude) in given order
 
+    A key is needed to get access to googles elevation api, the key_filepath variable should include a string of the
+    filepath to the api key.
 
-    # AAGGHHHGHH APIIIIII skajdksjdkja
+    The api key will be given in a .txt file
+
+    >>> get_altitude((46, 56), 'elevation_api_key.txt')
+    36.79061889648438
+    >>> get_altitude((0.0, 0.0), 'elevation_api_key.txt'))
+    -3492
+    """
+    # request urls are essentially the same each request, but only with the lat and lon points having different values
+    begin = 'https://maps.googleapis.com/maps/api/elevation/json?locations='  # beginning of the url
+
+    # converts the latitude and longitude points into a string
+    lat = str(point[0])
+    lon = str(point[1])
+
+    # reads file that contains the api key
+    file = open(key_filepath)
+    key = '&key=' + file.read()  # combines the key with the correct syntax
+
+    # combines all elements to have the final url
+    url = begin + lat + ',' + lon + key
+
+    r = requests.get(url)  # this is apart of the requests module, it sends a request to the inputted url
+    data = r.json()  # converts the json information into a python readable datatype (dictionary)
+
+    return data['results'][0]['elevation']  # returns only the elevation variable from nested dictionary
