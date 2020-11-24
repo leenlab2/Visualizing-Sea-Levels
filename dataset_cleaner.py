@@ -6,16 +6,39 @@ There are two main datasets we are working with:
 """
 from typing import Dict
 import netCDF4 as nc
+import numpy.ma as ma
 
 
 ###################################################################################################
 # Cleanup Temperature data
 ###################################################################################################
-def read_temperature_data() -> Dict[int, float]:
-    """Return a dictionary where the key is a certain year and the value is the average temperature
-    for that year.
+def read_temperature_data(lat: float, lon: float) -> Dict[int, float]:
+    """Return a dictionary where the key is a certain year and the value is the average temperature in Kelvin
+    for that year. 
+    
+    Prerequisites
+    - -90 <= lat <= 89.5
+    - 0 <= lon <= 359.5
     """
-    # TODO implement this (you may add helper functions)
+    fn = 'temp.nc'
+    fn2 = 'temp46-65.nc'
+    fn3 = 'temp81-100.nc'
+    
+    ds = nc.Dataset(fn)
+    ds2 = nc.Dataset(fn2)
+    ds3 = nc.Dataset(fn3)
+    
+    temp = ds['tas']
+    temp2 = ds2['tas']
+    temp3 = ds3['tas']
+    
+    temperatures = {i + 1: float('%7.4f' % (temp[12 * i, 0, 0])) for i in range(0, 20)}
+    dict2 = {i + 46: float('%7.4f' % (temp2[12 * i, 0, 0])) for i in range(0, 20)}
+    dict3 = {i + 81: float('%7.4f' % (temp3[12 * i, 0, 0])) for i in range(0, 20)}
+    
+    temperatures.update(dict2)
+    temperatures.update(dict3)
+    return temperatures
 
 
 ###################################################################################################
