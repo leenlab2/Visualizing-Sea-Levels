@@ -6,7 +6,6 @@ There are two main datasets we are working with:
 """
 from typing import Dict
 import netCDF4 as nc
-import numpy.ma as ma
 
 
 ###################################################################################################
