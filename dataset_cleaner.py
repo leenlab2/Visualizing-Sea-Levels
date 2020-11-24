@@ -31,9 +31,9 @@ def read_temperature_data(lat: float, lon: float) -> Dict[int, float]:
     temp2 = ds2['tas']
     temp3 = ds3['tas']
     
-    temperatures = {i + 16: float('%7.4f' % (temp[12 * i, 0, 0])) for i in range(0, 20)}
-    dict2 = {i + 46: float('%7.4f' % (temp2[12 * i, 0, 0])) for i in range(0, 20)}
-    dict3 = {i + 81: float('%7.4f' % (temp3[12 * i, 0, 0])) for i in range(0, 20)}
+    temperatures = {i + 2016: float('%7.4f' % (temp[12 * i, 0, 0])) for i in range(0, 20)}
+    dict2 = {i + 2046: float('%7.4f' % (temp2[12 * i, 0, 0])) for i in range(0, 20)}
+    dict3 = {i + 2081: float('%7.4f' % (temp3[12 * i, 0, 0])) for i in range(0, 20)}
     
     temperatures.update(dict2)
     temperatures.update(dict3)
