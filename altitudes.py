@@ -12,29 +12,29 @@ def split_into_grid(n: int, coords: List[Tuple[float, float]]) -> Tuple[List[flo
     is a list of latitude coords.
 
     Preconditions:
-        - coords == [(88.0, 146.0), (88.0, 50.0), (40.0, 146.0), (40.0, 50.0)]
+        - coords == [(88.0, -146.0), (88.0, -50.0), (40.0, -146.0), (40.0, -50.0)]
         - (coords[0][0] - coords[2][0]) % n == 0.0
         - (coords[0][1] - coords[1][1]) % n == 0.0
 
-    >>> split_into_grid(48, [(88.0, 146.0), (88.0, 50.0), (40.0, 146.0), (40.0, 50.0)])
-    ([40, 88], [50, 98, 146])
-    >>> split_into_grid(12, [(88.0, 146.0), (88.0, 50.0), (40.0, 146.0), (40.0, 50.0)])
-    ([40, 52, 64, 76, 88], [50, 62, 74, 86, 98, 110, 122, 134, 146])
-    >>> split_into_grid(2, [(88.0, 146.0), (88.0, 50.0), (40.0, 146.0), (40.0, 50.0)])
-    ([40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88],
-    [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 94, 96, 98, 100, 102,
-    104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124, 126, 128, 130, 132, 134, 136, 138, 140, 142, 144, 146])
+    >>> split_into_grid(48, [(88.0, -146.0), (88.0, -50.0), (40.0, -146.0), (40.0, -50.0)])
+    ([40.0, 88.0], [-50.0, -98.0, -146.0])
+    >>> split_into_grid(12, [(88.0, -146.0), (88.0, -50.0), (40.0, -146.0), (40.0, -50.0)])
+    ([40.0, 52.0, 64.0, 76.0, 88.0], [-50.0, -62.0, -74.0, -86.0, -98.0, -110.0, -122.0, -134.0, -146.0])
+    >>> split_into_grid(2, [(88.0, -146.0), (88.0, -50.0), (40.0, -146.0), (40.0, -50.0)])
+    ([40.0, 44.0, 48.0, 52.0, 56.0, 60.0, 64.0, 68.0, 72.0, 76.0, 80.0, 84.0, 88.0], [-50.0, -54.0, -58.0, -62.0,
+    -66.0, -70.0, -74.0, -78.0, -82.0, -86.0, -90.0, -94.0, -98.0, -102.0, -106.0, -110.0, -114.0, -118.0, -122.0,
+    -126.0, -130.0, -134.0, -138.0, -142.0, -146.0])
     """
 
     num_latitude = int((coords[0][0] - coords[2][0]) / n)  # Finding the number of latitude lines
-    num_longitude = int((coords[0][1] - coords[1][1]) / n)  # Finding the number of longitude lines
+    num_longitude = abs(int((coords[0][1] - coords[1][1]) / n))  # Finding the number of longitude lines
 
     latitude_start = coords[2][0]  # Marker for where the latitude starts (e.g. 40 - the smallest lat value)
     longitude_start = coords[1][1]  # Marker for where the longitude starts (e.g. 50 - the smallest lon value)
 
     # Comprehensions to find the line values
     lat_so_far = [latitude_start + i * n for i in range(num_latitude + 1)]
-    lon_so_far = [longitude_start + i * n for i in range(num_longitude + 1)]
+    lon_so_far = [longitude_start - i * n for i in range(num_longitude + 1)]
 
     return (lat_so_far, lon_so_far)
 
@@ -46,15 +46,15 @@ def get_midpoints(grid: Tuple[List[float], List[float]]) -> List[Tuple[float, fl
     (The *input* will be a tuple, where the first element is a list of longitude coords and the second
     is a list of latitude coords.)
 
-    >>> grids = split_into_grid(48, [(88.0, 146.0), (88.0, 50.0), (40.0, 146.0), (40.0, 50.0)])
+    >>> grids = split_into_grid(48, [(88.0, -146.0), (88.0, -50.0), (40.0, -146.0), (40.0, -50.0)])
     >>> get_midpoints(grids)
-    [(64.0, 74.0), (64.0, 98.0)]
-    >>> grids = split_into_grid(12, [(88.0, 146.0), (88.0, 50.0), (40.0, 146.0), (40.0, 50.0)])
+    [(64.0, -74.0), (64.0, -98.0)]
+    >>> grids = split_into_grid(12, [(88.0, -146.0), (88.0, -50.0), (40.0, -146.0), (40.0, -50.0)])
     >>> get_midpoints(grids)
-    [(46.0, 56.0), (52.0, 56.0), (58.0, 56.0), (64.0, 56.0), (46.0, 62.0), (52.0, 62.0), (58.0, 62.0), (64.0, 62.0),
-    (46.0, 68.0), (52.0, 68.0), (58.0, 68.0), (64.0, 68.0), (46.0, 74.0), (52.0, 74.0), (58.0, 74.0), (64.0, 74.0),
-    (46.0, 80.0), (52.0, 80.0), (58.0, 80.0), (64.0, 80.0), (46.0, 86.0), (52.0, 86.0), (58.0, 86.0), (64.0, 86.0),
-    (46.0, 92.0), (52.0, 92.0), (58.0, 92.0), (64.0, 92.0), (46.0, 98.0), (52.0, 98.0), (58.0, 98.0), (64.0, 98.0)]
+    [(46.0, -56.0), (52.0, -56.0), (58.0, -56.0), (64.0, -56.0), (46.0, -62.0), (52.0, -62.0), (58.0, -62.0), (64.0, -62.0),
+    (46.0, -68.0), (52.0, -68.0), (58.0, -68.0), (64.0, -68.0), (46.0, -74.0), (52.0, -74.0), (58.0, -74.0), (64.0, -74.0),
+    (46.0, -80.0), (52.0, -80.0), (58.0, -80.0), (64.0, -80.0), (46.0, -86.0), (52.0, -86.0), (58.0, -86.0), (64.0, -86.0),
+    (46.0, -92.0), (52.0, -92.0), (58.0, -92.0), (64.0, -92.0), (46.0, -98.0), (52.0, -98.0), (58.0, -98.0), (64.0, -98.0)]
     """
     # Finds the difference between latitude and longitude lines for the midpoint
     lat_difference = (grid[0][1] - grid[0][0]) / 2
@@ -74,35 +74,27 @@ def get_midpoints(grid: Tuple[List[float], List[float]]) -> List[Tuple[float, fl
     return points_so_far
 
 
-def get_altitude(point: Tuple[float, float], key_filepath: str) -> float:
-    """Return the altitude of a give point, using google elevation API
+def get_altitude(point: Tuple[float, float]) -> float:
+    """Return the altitude of a give point, using Canada Gov elevation api
+
     The tuple values should containt (latitude, longitude) in given order
 
-    A key is needed to get access to googles elevation api, the key_filepath variable should include a string of the
-    filepath to the api key.
-
-    The api key will be given in a .txt file
-
-    >>> get_altitude((46, 56), 'elevation_api_key.txt')
-    36.79061889648438
-    >>> get_altitude((0.0, 0.0), 'elevation_api_key.txt'))
-    -3492
+    >>> get_altitude((56.0, -101.0))
+    327.0
+    >>> get_altitude((45.5, -71.5))
+    326.0
     """
+
     # request urls are essentially the same each request, but only with the lat and lon points having different values
-    begin = 'https://maps.googleapis.com/maps/api/elevation/json?locations='  # beginning of the url
-
+    begin = 'http://geogratis.gc.ca/services/elevation/cdem/altitude?'
     # converts the latitude and longitude points into a string
-    lat = str(point[0])
-    lon = str(point[1])
-
-    # reads file that contains the api key
-    file = open(key_filepath)
-    key = '&key=' + file.read()  # combines the key with the correct syntax
+    lat = 'lat=' + str(point[0])
+    lon = 'lon=' + str(point[1])
 
     # combines all elements to have the final url
-    url = begin + lat + ',' + lon + key
+    url = begin + lat + '&' + lon
 
-    r = requests.get(url)  # this is apart of the requests module, it sends a request to the inputted url
+    r = requests.get(url)  # sends a request to url and stores data in variable r
     data = r.json()  # converts the json information into a python readable datatype (dictionary)
 
-    return data['results'][0]['elevation']  # returns only the elevation variable from nested dictionary
+    return data['altitude']  # returns only the elevation variable from nested dictionary
