@@ -51,6 +51,6 @@ def read_sea_level_data() -> Dict[int, float]:
     ds = nc.Dataset(fn)
     averages = ds['global_average_sea_level_change'][:]
     time_sea = ds['time'][:]
-    sea_levels = {i + 1: averages[i] for i in range(len(time_sea))}
+    sea_levels = {i + 1: averages[i] for i in range(10, 70)}
     return sea_levels
     
