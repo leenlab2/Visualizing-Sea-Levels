@@ -19,7 +19,7 @@ def read_temperature_data(lat: float, lon: float) -> Dict[int, float]:
         - -90 <= lat <= 89.5
         - 0 <= lon <= 359.5
         """
-    fn = 'Dataset/temp2006-2100.nc'
+    fn = 'datasets/temp2006-2100.nc'
     ds = nc.Dataset(fn)
     temp = ds['tas']
     temperatures = {i + 2006: float('%7.4f' % (temp[12 * i, 0, 0])) for i in range(0, 15)}
@@ -33,7 +33,7 @@ def read_sea_level_data() -> Dict[int, float]:
     """Return a dictionary where the key is a certain year and the value is the average sea level change
     for that year (from 2006 to 2119).
     """
-    fn = 'global_timeseries_measures.nc.nc4'
+    fn = 'datasets/global_timeseries_measures.nc.nc4'
     ds = nc.Dataset(fn)
     averages = ds['global_average_sea_level_change'][:]
     time_sea = ds['time'][:]
