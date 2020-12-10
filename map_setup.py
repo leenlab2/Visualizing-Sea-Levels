@@ -17,6 +17,7 @@ class MapImage:
         - land: set of pixel points that represent land
         - sea: set of pixel points that represent sea
         - coastal: set of pixel points that represent coastal areas
+        - year: the year this map was taken for
 
     Representation Invariants:
         - all(-90 <= l <= 90 for l in self.latitude)
@@ -31,16 +32,18 @@ class MapImage:
     land: Set[Tuple[int, int]]
     sea: Set[Tuple[int, int]]
     coastal: Set[Tuple[int, int]]
+    year: int
 
     def __init__(self,
                  latitude: Tuple[float, float],
-                 longitude: Tuple[float, float], file: str) -> None:
+                 longitude: Tuple[float, float], year: int, file: str) -> None:
         """Initialize a MapImage object"""
         self.latitude = latitude
         self.longitude = longitude
         self.map_image = Image.open(file)
         self.land, self.sea = classify_land(self.map_image)
         self.coastal = classify_coastal(self)
+        self.year = year
 
     def change_to_sea(self, point: Tuple[int, int]) -> None:
         """Change the color of the given pixel to blue, so that it is "underwater".
@@ -70,7 +73,7 @@ class Midpoint:
     def __init__(self, coords: Tuple[float, float], map_image: MapImage) -> None:
         """Initialize a Midpoint object"""
         self.coords = coords
-        self.pixels = convert_location_to_pixels(coords)
+        self.pixels = convert_location_to_pixels(map_image, coords)
         self.map_image = map_image
 
 
@@ -158,7 +161,7 @@ def classify_land(map_image: Image) -> Tuple[Set[Tuple[int, int]], Set[Tuple[int
     sea = set()
 
     # get the greatest value of the pixel coordinates
-    x_max, y_max = map_image.size()
+    x_max, y_max = map_image.size
     x_max -= 1
     y_max -= 1
 

@@ -1,76 +1,83 @@
 """This module uses the elevation API to get altitude of certain locations.
 """
-from typing import List, Tuple, Dict
-import json
+from typing import List, Tuple
 import requests
 from map_setup import MapImage, Midpoint
-from PIL import Image
 
 
-def split_into_grid(n: int, map: MapImage) -> Tuple[List[float], List[float]]:
-    """Split the map into a grids size of n * n, and return the location coordinates that mark the grid.
+def split_into_grid(n: int, m: int, my_map: MapImage) -> Tuple[List[float], List[float]]:
+    """Return the location of the grid lines for a grid of size n * n.
 
-    The output will be a tuple, where the first element is a list of longitude coords and the second
-    is a list of latitude coords.
-
+    The output will be a tuple, whose first element is a list of latitude coords and the second
+    is a list of longitude coords.
 
     Preconditions:
-        - (map.latitude[1] - map.latitude[0) % n == 0.0
-        - (map.longitude[1] - map.longitude[0]) % n == 0.0
+        - n >= 1
+        - m >= 1
 
-    >>> m = MapImage((40, 84), (-50, -146), 'Canada.png')
-    >>> split_into_grid(4, m)
-    ([40.0, 44.0, 48.0, 52.0, 56.0, 60.0, 64.0, 68.0, 72.0, 76.0, 80.0, 84.0], [-50.0, -54.0, -58.0, -62.0, -66.0,
-    -70.0, -74.0, -78.0, -82.0, -86.0, -90.0, -94.0, -98.0, -102.0, -106.0, -110.0, -114.0, -118.0, -122.0, -126.0,
-    -130.0, -134.0, -138.0, -142.0, -146.0])
+    >>> map1 = MapImage((40.0, 84.0), (-146.0, -50.0), 2020, 'Canada.png')
+    >>> split_into_grid(4, 4, map1)
+    ([40.0, 51.0, 62.0, 73.0, 84.0], [-146.0, -122.0, -98.0, -74.0, -50.0])
     """
-    coords = (map.latitude, map.longitude)
-    # coords = ((40,  84), (-50, -146))
+    # retrieve the latitude and longitude coordinates of the map
+    latitude = my_map.latitude
+    longitude = my_map.longitude
 
-    num_latitude = int((coords[0][1] - coords[0][0]) / n)  # Finding the number of latitude lines
-    num_longitude = abs(int((coords[1][1] - coords[1][0]) / n))  # Finding the number of longitude lines
+    # ACCUMULATORS: keep track of grid lines
+    lat_so_far = [latitude[0]]
+    long_so_far = [longitude[0]]
 
-    latitude_start = coords[0][0]  # Marker for where the latitude starts (e.g. 40 - the smallest lat value)
-    longitude_start = coords[1][0]  # Marker for where the longitude starts (e.g. 50 - the smallest lon value)
+    # get the range of how many degrees latitude/longitude the map spans
+    latitude_range = abs(latitude[1] - latitude[0])
+    longitude_range = abs(longitude[1] - longitude[0])
 
-    # Comprehensions to find the line values
-    lat_so_far = [latitude_start + i * n for i in range(num_latitude + 1)]
-    lon_so_far = [longitude_start - i * n for i in range(num_longitude + 1)]
+    # the "step" is equivalent to the width of the grid squares
+    latitude_step = latitude_range / n
+    longitude_step = longitude_range / m
 
-    return (lat_so_far, lon_so_far)
+    for i in range(1, n + 1):
+        lat_so_far.append(lat_so_far[i - 1] + latitude_step)
+
+    for j in range(1, m + 1):
+        long_so_far.append(long_so_far[j - 1] + longitude_step)
+
+    return (lat_so_far, long_so_far)
 
 
-def get_midpoints(grid: Tuple[List[float], List[float]], map: MapImage) -> List[Midpoint]:
+def get_midpoints(grid: Tuple[List[float], List[float]], my_map: MapImage) -> List[Midpoint]:
     """Return the midpoints of the grid squares
 
     The grid input is the same as the format for the split_into_grid functions output
-    (The *input* will be a tuple, where the first element is a list of longitude coords and the second
+    (The *input* will be a tuple, whose first element is a list of longitude coords and the second
     is a list of latitude coords.)
 
-    >>> m = MapImage((40, 84), (-50, -146), 'Canada.png')
-    >>> grids = split_into_grid(4, m)
+    >>> m = MapImage((40.0, 84.0), (-146.0, -50.0), 2020, 'Canada.png')
+    >>> grids = split_into_grid(2, 2, m)
     >>> midpoints = get_midpoints(grids, m)
     >>> midpoints[0].coords
-    (42.0, -52.0)
+    (51.0, -122.0)
     >>> midpoints[1].coords
-    (44.0, -52.0)
+    (51.0, -74.0)
     """
-    # Finds the difference between latitude and longitude lines for the midpoint
-    lat_delta = (grid[0][1] - grid[0][0])
-    lon_delta = (grid[1][1] - grid[1][0])
+    # retrieve coordinates of grid lines
+    latitudes = grid[0]
+    longitudes = grid[1]
 
-    # Markers for where the latitude and longitude grid starts
-    lat_start = grid[0][0] + (lat_delta / 2)
-    lon_start = grid[1][0] + (lon_delta / 2)
+    # ACCUMULATORS: keep track of midpoint coordinates
+    lat_midpoints = []
+    long_midpoints = []
 
-    # ACCUMULATOR: Keeps track of the midpoints so far
-    points_so_far = []
+    # midpoint coordinates for latitude
+    for i in range(len(latitudes) - 1):
+        lat = (latitudes[i] + latitudes[i + 1]) / 2
+        lat_midpoints.append(lat)
 
-    for lon in range(0, len(grid[1])):  # The loop iterates row by row through the map
-        for lat in range(0, len(grid[0])):
-            points_so_far.append(Midpoint((lat_start + lat_delta * lat, lon_start + lon_delta * lon), map))
+    # midpoint coordinates for longitudes
+    for i in range(len(longitudes) - 1):
+        long = (longitudes[i] + longitudes[i + 1]) / 2
+        long_midpoints.append(long)
 
-    return points_so_far
+    return [Midpoint((lat, long), my_map) for lat in lat_midpoints for long in long_midpoints]
 
 
 def get_altitude(mid_point: Midpoint) -> float:
@@ -87,7 +94,8 @@ def get_altitude(mid_point: Midpoint) -> float:
     """
     coords = mid_point.coords
 
-    # request urls are essentially the same each request, but only with the lat and lon points having different values
+    # request urls are essentially the same each request
+    # but only with the lat and lon points having different values
     begin = 'http://geogratis.gc.ca/services/elevation/cdem/altitude?'
     # converts the latitude and longitude points into a string
     lat = 'lat=' + str(coords[0])
@@ -100,4 +108,3 @@ def get_altitude(mid_point: Midpoint) -> float:
     data = r.json()  # converts the json information into a python readable datatype (dictionary)
 
     return data['altitude']  # returns only the elevation variable from nested dictionary
-
