@@ -22,7 +22,7 @@ def read_temperature_data(lat: float, lon: float) -> Dict[int, float]:
     fn = 'datasets/temp2006-2100.nc'
     ds = nc.Dataset(fn)
     temp = ds['tas']
-    temperatures = {i + 2006: float('%7.4f' % (temp[12 * i, 0, 0])) for i in range(0, 15)}
+    temperatures = {i + 2006: float('%7.4f' % (temp[12 * i, lat, lon])) for i in range(0, 15)}
     return temperatures
 
 
