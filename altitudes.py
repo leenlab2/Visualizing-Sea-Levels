@@ -1,20 +1,17 @@
 """This module uses the elevation API to get altitude of certain locations.
 """
-from typing import List, Tuple
+from typing import List, Tuple, Set, Dict
 import requests
 from map_setup import MapImage, Midpoint
 
 
 def split_into_grid(n: int, m: int, my_map: MapImage) -> Tuple[List[float], List[float]]:
-    """Return the location of the grid lines for a grid of size n * n.
-
+    """Return the location of the grid lines for a grid of size n * m.
     The output will be a tuple, whose first element is a list of latitude coords and the second
     is a list of longitude coords.
-
     Preconditions:
         - n >= 1
         - m >= 1
-
     >>> map1 = MapImage((40.0, 84.0), (-146.0, -50.0), 2020, 'Canada.png')
     >>> split_into_grid(4, 4, map1)
     ([40.0, 51.0, 62.0, 73.0, 84.0], [-146.0, -122.0, -98.0, -74.0, -50.0])
@@ -46,11 +43,9 @@ def split_into_grid(n: int, m: int, my_map: MapImage) -> Tuple[List[float], List
 
 def get_midpoints(grid: Tuple[List[float], List[float]], my_map: MapImage) -> List[Midpoint]:
     """Return the midpoints of the grid squares
-
     The grid input is the same as the format for the split_into_grid functions output
     (The *input* will be a tuple, whose first element is a list of longitude coords and the second
     is a list of latitude coords.)
-
     >>> m = MapImage((40.0, 84.0), (-146.0, -50.0), 2020, 'Canada.png')
     >>> grids = split_into_grid(2, 2, m)
     >>> midpoints = get_midpoints(grids, m)
@@ -82,9 +77,8 @@ def get_midpoints(grid: Tuple[List[float], List[float]], my_map: MapImage) -> Li
 
 def get_altitude(mid_point: Midpoint) -> float:
     """Return the altitude of a give point, using Canada Gov elevation api
-
     The tuple values should containt (latitude, longitude) in given order
-    >>> m = MapImage((40, 84), (-50, -146), 'Canada.png')
+    >>> m = MapImage((40, 84), (-146, -50), 2020, 'Canada.png')
     >>> mid_point1 = Midpoint((56.0, -101.0), m)
     >>> mid_point2 = Midpoint((45.5, -71.5), m)
     >>> get_altitude(mid_point1)
@@ -108,3 +102,19 @@ def get_altitude(mid_point: Midpoint) -> float:
     data = r.json()  # converts the json information into a python readable datatype (dictionary)
 
     return data['altitude']  # returns only the elevation variable from nested dictionary
+
+
+def get_data(my_map: MapImage) -> Dict[Tuple[float, float]: float]:
+    """Compile altitude data, return value should be a dictionary with a tuple containing (latitude, longitude) mapping
+    to the altitude of that point.
+
+    The grid size for the data will be fixed at 50*50
+    """
+    grid = split_into_grid(50, 50, my_map)
+    midpoints = get_midpoints(grid, my_map)
+
+    data = {}
+    for point in midpoints:
+        altitude = get_altitude(point)
+        if altitude is not None:
+            data[point.coords] = altitude
