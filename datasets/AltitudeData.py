@@ -1,5 +1,5 @@
 """Dataset of altitudes derived from the Canada Elevation API.
-This data was generated using the function get_data() in altitudes.py.
+This data was generated using the function get_altitude_data() in altitudes.py.
 
 The data is a dictionary of the form {(latitude, longitude): altitude}
 """
