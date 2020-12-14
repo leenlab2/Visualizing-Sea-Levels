@@ -37,6 +37,9 @@ def read_temperature_data(lat: float, lon: float, filename: str) -> Dict[int, fl
 def read_sea_level_data(filename: str) -> Dict[int, float]:
     """Return a dictionary where the key is a year and the value is the average sea level change
     for that year (from 2006 to 2018).
+    
+    Preconditions:
+        - filename != ''
     """
     # use the netCDF4 library to read the NetCDF file
     ds = nc.Dataset(filename)
