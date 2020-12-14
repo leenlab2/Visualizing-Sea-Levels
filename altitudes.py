@@ -1,18 +1,21 @@
 """This module uses the elevation API to get altitude of certain locations.
 """
-from typing import List, Tuple, Set, Dict
+from typing import List, Tuple, Dict
 import requests
-from map_setup import MapImage, Midpoint
+from map_setup import MapArea, Midpoint
 
 
-def split_into_grid(n: int, m: int, my_map: MapImage) -> Tuple[List[float], List[float]]:
-    """Return the location of the grid lines for a grid of size n * m.
+def split_into_grid(n: int, m: int, my_map: MapArea) -> Tuple[List[float], List[float]]:
+    """Return the location of the grid lines for a grid of size n * n.
+
     The output will be a tuple, whose first element is a list of latitude coords and the second
     is a list of longitude coords.
+
     Preconditions:
         - n >= 1
         - m >= 1
-    >>> map1 = MapImage((40.0, 84.0), (-146.0, -50.0), 2020, 'Canada.png')
+
+    >>> map1 = MapArea((40.0, 84.0), (-146.0, -50.0))
     >>> split_into_grid(4, 4, map1)
     ([40.0, 51.0, 62.0, 73.0, 84.0], [-146.0, -122.0, -98.0, -74.0, -50.0])
     """
@@ -41,14 +44,19 @@ def split_into_grid(n: int, m: int, my_map: MapImage) -> Tuple[List[float], List
     return (lat_so_far, long_so_far)
 
 
-def get_midpoints(grid: Tuple[List[float], List[float]], my_map: MapImage) -> List[Midpoint]:
-    """Return the midpoints of the grid squares
-    The grid input is the same as the format for the split_into_grid functions output
-    (The *input* will be a tuple, whose first element is a list of longitude coords and the second
-    is a list of latitude coords.)
-    >>> m = MapImage((40.0, 84.0), (-146.0, -50.0), 2020, 'Canada.png')
-    >>> grids = split_into_grid(2, 2, m)
-    >>> midpoints = get_midpoints(grids, m)
+def get_midpoints(grid: Tuple[List[float], List[float]], my_map: MapArea) -> List[Midpoint]:
+    """Return the midpoints of the grid squares.
+    The grid input is the same as the format for the split_into_grid functions output.
+
+    Preconditions:
+        - grid[0] is a list of latitude coordinates
+        - grid[1] is a list of longitude coordinates
+        - grid[0] != []
+        - grid[1] != []
+
+    >>> map1 = MapArea((40.0, 84.0), (-146.0, -50.0))
+    >>> grids = split_into_grid(2, 2, map1)
+    >>> midpoints = get_midpoints(grids, map1)
     >>> midpoints[0].coords
     (51.0, -122.0)
     >>> midpoints[1].coords
@@ -60,25 +68,26 @@ def get_midpoints(grid: Tuple[List[float], List[float]], my_map: MapImage) -> Li
 
     # ACCUMULATORS: keep track of midpoint coordinates
     lat_midpoints = []
-    long_midpoints = []
+    lon_midpoints = []
 
     # midpoint coordinates for latitude
     for i in range(len(latitudes) - 1):
-        lat = (latitudes[i] + latitudes[i + 1]) / 2
-        lat_midpoints.append(lat)
+        lat_mp = (latitudes[i] + latitudes[i + 1]) / 2
+        lat_midpoints.append(lat_mp)
 
     # midpoint coordinates for longitudes
     for i in range(len(longitudes) - 1):
-        long = (longitudes[i] + longitudes[i + 1]) / 2
-        long_midpoints.append(long)
+        lon_mp = (longitudes[i] + longitudes[i + 1]) / 2
+        lon_midpoints.append(lon_mp)
 
-    return [Midpoint((lat, long), my_map) for lat in lat_midpoints for long in long_midpoints]
+    return [Midpoint((lat, lon), my_map) for lat in lat_midpoints for lon in lon_midpoints]
 
 
 def get_altitude(mid_point: Midpoint) -> float:
-    """Return the altitude of a give point, using Canada Gov elevation api
-    The tuple values should containt (latitude, longitude) in given order
-    >>> m = MapImage((40, 84), (-146, -50), 2020, 'Canada.png')
+    """Return the altitude of a give point, using Canada Gov elevation API.
+    The tuple values should containt (latitude, longitude) in given order.
+
+    >>> m = MapArea((40, 84), (-50, -146))
     >>> mid_point1 = Midpoint((56.0, -101.0), m)
     >>> mid_point2 = Midpoint((45.5, -71.5), m)
     >>> get_altitude(mid_point1)
@@ -86,14 +95,15 @@ def get_altitude(mid_point: Midpoint) -> float:
     >>> get_altitude(mid_point2)
     326.0
     """
-    coords = mid_point.coords
+    # coordinates of the midpoint
+    latitude, longitude = mid_point.coords
 
     # request urls are essentially the same each request
     # but only with the lat and lon points having different values
     begin = 'http://geogratis.gc.ca/services/elevation/cdem/altitude?'
     # converts the latitude and longitude points into a string
-    lat = 'lat=' + str(coords[0])
-    lon = 'lon=' + str(coords[1])
+    lat = 'lat=' + str(latitude)
+    lon = 'lon=' + str(longitude)
 
     # combines all elements to have the final url
     url = begin + lat + '&' + lon
@@ -104,17 +114,23 @@ def get_altitude(mid_point: Midpoint) -> float:
     return data['altitude']  # returns only the elevation variable from nested dictionary
 
 
-def get_data(my_map: MapImage) -> Dict[Tuple[float, float]: float]:
-    """Compile altitude data, return value should be a dictionary with a tuple containing (latitude, longitude) mapping
-    to the altitude of that point.
+def get_altitude_data(my_map: MapArea) -> Dict[Tuple[float, float], float]:
+    """Return a dictionary with a tuple containing (latitude, longitude) mapping to the altitude of
+    that point.
 
-    The grid size for the data will be fixed at 50*50
+    The grid size for the data will be fixed at 50*50.
     """
+    # get grid and midpoints
     grid = split_into_grid(50, 50, my_map)
     midpoints = get_midpoints(grid, my_map)
 
+    # ACCUMULATOR: keeps track of dictionary mapping location to altitude
     data = {}
+
     for point in midpoints:
         altitude = get_altitude(point)
-        if altitude is not None:
+
+        if altitude is not None:  # if the point lies outside Canada, altitude is None
             data[point.coords] = altitude
+
+    return data
